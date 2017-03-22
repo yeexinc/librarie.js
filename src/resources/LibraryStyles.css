@@ -37,6 +37,7 @@ body {
     padding: 3;
     color: white;
     transition: 0.15s;
+    overflow-y: hidden;
 }
 
 .LibraryItemHeader:hover {
@@ -48,6 +49,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    background: #414141;
 }
 
 .LibraryItemContainerCategory .LibraryItemIcon {

@@ -1357,9 +1357,6 @@
                 },
                 {
                   "path": "Display.Display.BySurfaceColors"
-                },
-                {
-                  "path": "Display.Display.BySurfaceColors"
                 }
               ],
               "childElements": []

@@ -2,6 +2,8 @@ type MemberType = "none" | "creation" | "action" | "query";
 type ElementType = "none" | "category" | "group";
 type ItemType = "none" | "category" | "group" | "creation" | "action" | "query";
 
+import * as _ from 'underscore';
+
 export class TypeListNode {
 
     fullyQualifiedName: string = "";
@@ -71,6 +73,7 @@ export class ItemData {
 export function constructNestedLibraryItems(
     includeParts: string[],
     typeListNode: TypeListNode,
+    typeListNodes: TypeListNode[],
     inclusive: boolean,
     parentItem: ItemData,
     iconUrl?: string): ItemData {
@@ -105,13 +108,17 @@ export function constructNestedLibraryItems(
     for (let i = startIndex; i < fullNameParts.length; i++) {
         let libraryItem = new ItemData(fullNameParts[i]);
         libraryItem.itemType = "none";
-        libraryItem.iconUrl = iconUrl; 
+        libraryItem.iconUrl = iconUrl;
 
         // If this is the leaf most level, copy all item information over.
         if (i == fullNameParts.length - 1) {
             libraryItem.contextData = typeListNode.contextData;
             libraryItem.iconUrl = typeListNode.iconUrl;
             libraryItem.itemType = typeListNode.memberType;
+
+            // Remove the typeListNode from the list.
+            let i = typeListNodes.indexOf(typeListNode); 
+            typeListNodes[i] = null;
         }
 
         if (parentItem) {
@@ -171,16 +178,21 @@ export function constructLibraryItem(
         let parentNode = inclusive ? null : result;
 
         for (let j = 0; j < typeListNodes.length; j++) {
-
-            let fullyQualifiedName = typeListNodes[j].fullyQualifiedName;
-            if (!fullyQualifiedName.startsWith(includePath)) {
-                continue; // Not matching, skip to the next type node.
+            if (typeListNodes[j]) {
+                let fullyQualifiedName = typeListNodes[j].fullyQualifiedName;
+                if (!fullyQualifiedName.startsWith(includePath) || !(_.contains(fullyQualifiedName.split('.'), includeParts[includeParts.length - 1]))) {
+                    continue; // Not matching, skip to the next type node.
+                }
+                parentNode = constructNestedLibraryItems(includeParts,
+                    typeListNodes[j], typeListNodes, inclusive, parentNode, layoutElement.include[i].iconUrl);
             }
-
-            parentNode = constructNestedLibraryItems(includeParts,
-                typeListNodes[j], inclusive, parentNode, layoutElement.include[i].iconUrl);
         }
 
+        if (!parentNode) {
+            // Warning is displayed if the type specified in LayoutSpecs.json is not found in RawTypeData.json,
+            // or if the type is specified more than once. 
+            console.warn("Warning: The type '" + includePath + "' is not found in 'RawTypeData.json'. No node of this type is rendered in the library view.");
+        }
         if (parentNode && (parentNode != result)) {
             // If a new parent node was created, append it as a child of 
             // the current resulting node.
@@ -243,5 +255,25 @@ export function buildLibraryItemsFromLayoutSpecs(loadedTypes: any, layoutSpecs: 
     for (let i = 0; i < layoutSpecs.elements.length; i++) {
         layoutElements.push(new LayoutElement(layoutSpecs.elements[i]));
     }
-    return convertToLibraryTree(typeListNodes, layoutElements);
+
+    let libraryTreeItems: ItemData[] = convertToLibraryTree(typeListNodes, layoutElements);
+
+    let miscellaneous = new ItemData("Miscellaneous");
+    miscellaneous.contextData = "Miscellaneous";
+    miscellaneous.itemType = "category";
+    miscellaneous.iconUrl = "/src/resources/icons/Category.List.svg";
+
+    // Search for the items that are not removed from typeListNodes.
+    _.each(typeListNodes, function (i) {
+        if (i) {
+            console.warn("Warning: '" + i.contextData + "' is not specified in 'LayoutSpecs.json'. The item is displayed in the 'Miscellaneous' category.");
+            let newItem = new ItemData(i.fullyQualifiedName);
+            newItem.contextData = i.contextData;
+            newItem.iconUrl = i.iconUrl;
+            newItem.itemType = i.memberType;
+            miscellaneous.childItems.push(newItem);
+        }
+    });
+    if (miscellaneous.childItems.length > 0) libraryTreeItems.push(miscellaneous);
+    return libraryTreeItems;
 }
