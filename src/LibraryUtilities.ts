@@ -108,7 +108,7 @@ export function constructNestedLibraryItems(
     for (let i = startIndex; i < fullNameParts.length; i++) {
         let libraryItem = new ItemData(fullNameParts[i]);
         libraryItem.itemType = "none";
-        libraryItem.iconUrl = iconUrl;
+        libraryItem.iconUrl = iconUrl; 
 
         // If this is the leaf most level, copy all item information over.
         if (i == fullNameParts.length - 1) {
