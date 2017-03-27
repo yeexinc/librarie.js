@@ -34,14 +34,12 @@ export class SearchBar extends React.Component<SearchBarProps, SearchBarState> {
     }
 
     onCheckBoxChange(event: any) {
-        console.log(event);
         if (_.contains(this.state.selectedCategories, event.target.name)) {
             this.setState({ selectedCategories: _.without(this.state.selectedCategories, event.target.name)})
         }
         else {
             this.state.selectedCategories.push(event.target.name);
         }
-        console.log(this.state.selectedCategories);
     }
 
     render() {
