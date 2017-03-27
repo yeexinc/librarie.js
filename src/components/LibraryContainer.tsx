@@ -7,6 +7,7 @@ import { LibraryView } from "../LibraryView";
 import { LibraryItem } from "./LibraryItem";
 import { SearchView } from "./SearchView";
 import { buildLibraryItemsFromLayoutSpecs, ItemData } from "../LibraryUtilities";
+import { SearchBar } from "./SearchBar";
 
 declare var boundContainer: any; // Object set from C# side.
 
